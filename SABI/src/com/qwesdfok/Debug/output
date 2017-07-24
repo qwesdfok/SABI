@@ -1,0 +1,211 @@
+import java.io.*;
+import java.util.*;
+import java.util.function.Function;
+interface InputWrapperInterface
+{
+int read()throws IOException;
+}
+interface OutputWrapperInterface
+{
+void write(String data)throws IOException;
+}
+class InputWrapper implements InputWrapperInterface
+{
+private FileInputStream inputStream;
+public InputWrapper(String fileName)throws FileNotFoundException{inputStream = new FileInputStream(fileName);}
+public int read()throws IOException{return inputStream.read();}
+}
+class OutputWrapper implements OutputWrapperInterface
+{
+private FileOutputStream outputStream;
+public OutputWrapper(String fileName)throws FileNotFoundException{outputStream = new FileOutputStream(fileName);}
+public void write(String data)throws IOException{outputStream.write(data.getBytes());}
+}
+abstract class RootClass
+{
+protected static InputWrapper inputWrapper;
+protected static OutputWrapper outputWrapper;
+protected static long offset=0;
+protected int length=0;
+protected boolean valid=true;
+protected String name;
+private static String typeName;
+public static String _outsepa_=";";
+public static String _nextsepa_="\r\n";
+public String _printway_="%n:%t=%v";
+public static String _input_="D:\\lab\\JavaPro\\SABI\\src\\com\\qwesdfok\\Debug\\data";
+public String _iterway_="%n_%i";
+public static String _output_="C:\\Users\\qwesd\\Desktop\\out.txt";
+public static String _bigend_="true";
+public String _insepa_=",";
+public void invalidFunction () {}
+abstract public String formatStr (String f,String sepa) ;
+abstract public int toInt () ;
+abstract public void read ()throws IOException ;
+public void preFunction () {}
+public void innerFunction () {}
+public void endFunction () {}
+abstract public void write ()throws IOException ;
+abstract public String getOutStr () ;
+public String getPrintStr () {return _printway_.replaceAll("%[vV]",getOutStr()).replaceAll("%[nN]",getName()).replaceAll("%[tT]",getTypeName());}
+public RootClass(String name, int length){this.length=length;this.name=name;}
+public static long readLong(int length) throws IOException {long res = 0;int index = 0;while (length > 0){if (_bigend_.equalsIgnoreCase("true"))res += (inputWrapper.read() << ((length - 1) * 8));else res += (inputWrapper.read() << (index * 8));index++;length--;}return res;}
+public static int readInteger(int length)throws IOException{return (int)readLong(length);}
+public static float readFloat(int length)throws IOException{return Float.intBitsToFloat(readInteger(length));}
+public static boolean readBoolean(int length)throws IOException{return (readInteger(length))!=0;}
+public static double readDouble(int length)throws IOException{return Double.longBitsToDouble(readLong(length));}
+public static String readString(int length)throws IOException {StringBuilder sb = new StringBuilder();if (length == 0) {int d = inputWrapper.read();while (d!='\0') {sb.append((char) d);d = inputWrapper.read();}return sb.toString();}while (length != 0) {sb.append((char) inputWrapper.read());length--;}return sb.toString();}
+public static String toHexStr(long data,int len,boolean isX){StringBuilder sb = new StringBuilder();char[] tablex={'0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f'};char[] tableX={'0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F'};for(int i=0;i<len*2;i++){if(isX)sb.append(tableX[(int)data&0xf]); else sb.append(tablex[(int)data&0xf]);data=data>>>4;}return sb.reverse().toString();}
+public static void setInputWrapper(InputWrapper inputWrapper){RootClass.inputWrapper=inputWrapper;}
+public static InputWrapper getInputWrapper(){return RootClass.inputWrapper;}
+public static void setOutputWrapper(OutputWrapper outputWrapper){RootClass.outputWrapper=outputWrapper;}
+public static OutputWrapper getOutputWrapper(){return RootClass.outputWrapper;}
+public int getLength(){return length;}
+public void setLength(int length){this.length=length;}
+public String getName(){return name;}
+public void setName(String name){this.name=name;}
+public String getTypeName(){return typeName;}
+public boolean isValid(){return valid;}
+}
+class MutableType<T extends RootClass> extends RootClass 
+{
+private ArrayList<T> dataList = new ArrayList<>();
+private Function<Integer, T> getInstanceFunction;
+private int count;
+private String typeName;
+public MutableType(String name, int length){super(name, length);}
+public MutableType(String name, int length, String _iterway_){super(name, length);this._iterway_=_iterway_;}
+public int toInt(){int res = 0;for (T t : dataList) {res += t.toInt();}return res;}
+public void read() throws IOException {dataList.clear();for (int i = 0; i < count; i++){T obj = getInstanceFunction.apply(length);String res = _iterway_.replaceAll("%[iI]","%0i");String[] ni = res.replaceAll(".*?(%\\d+[iI])((.*?)(?=%\\d+i)|.*$)", "$1\n").split("\n");for (int t = 0; t < ni.length; t++)res = res.replaceAll(ni[t], Integer.toString(i + Integer.parseInt(ni[t].substring(1, ni[t].length() - 1))));res=res.replaceAll("%[iI]",Integer.toString(i)).replaceAll("%[nN]","name").replaceAll("%[tT]","typeName").replaceAll("%%","%");obj.setName(res.replaceAll("%[nN]","name").replaceAll("%[tT]","typeName").replaceAll("%%","%"));obj.read();dataList.add(obj);}}
+public void write() throws IOException {outputWrapper.write(getPrintStr());}
+public String getOutStr() {StringBuilder sb = new StringBuilder();for (T t : dataList) {sb.append(t.getOutStr());sb.append(_insepa_);}sb.delete(sb.length()-_insepa_.length(),sb.length());return sb.toString();}
+public String formatStr(String f, String sepa) {StringBuilder sb = new StringBuilder();for (T t : dataList) {sb.append(t.formatStr(f, sepa));sb.append(sepa);}sb.delete(sb.length() - sepa.length(), sb.length());return sb.toString();}
+public void config(String typeName,int count, Function<Integer, T> function) {this.typeName=typeName;this.count = count;getInstanceFunction = function;}
+public String getTypeName(){return typeName;}
+}
+class SelfInteger extends RootClass
+{
+private static String typeName="int";
+private int v;
+public SelfInteger(String name, int length){super(name, length);}
+public static SelfInteger getInstance(int length){return new SelfInteger(null,length);}
+public int toInt(){return v;}
+public String getOutStr(){return Integer.toString(v);}
+public String formatStr(String f,String sepa){return f.replaceAll("%X","0X%H").replaceAll("%x","0x%h").replaceAll("%h",toHexStr(v,length,false)).replaceAll("%H",toHexStr(v,length,true)).replaceAll("%[tT]",getTypeName()).replaceAll("%[vV]",getOutStr()).replaceAll("%[nN]",name).replaceAll("%%","%");}
+public void read()throws IOException{v=readInteger(length);offset+=length;}
+public void write()throws IOException{outputWrapper.write(getPrintStr());}
+public String getTypeName(){return typeName;}
+}
+class SelfFloat extends RootClass
+{
+private static String typeName="float";
+private float v;
+public SelfFloat(String name, int length){super(name,length);}
+public static SelfFloat getInstance(int length){return new SelfFloat(null,length);}
+public int toInt(){return (int)v;}
+public String getOutStr(){return Float.toString(v);}
+public String formatStr(String f,String sepa){return f.replaceAll("%[xX]","%v").replaceAll("%[hH]","%v").replaceAll("%[tT]",getTypeName()).replaceAll("%[vV]",getOutStr()).replaceAll("%[nN]",name).replaceAll("%%","%");}
+public void read()throws IOException{offset+=length;v=readFloat(length);}
+public void write()throws IOException{outputWrapper.write(getPrintStr());}
+public String getTypeName(){return typeName;}
+}
+class SelfBoolean extends RootClass
+{
+private static String typeName="boolean";
+private boolean v;
+public SelfBoolean(String name, int length){super(name,length);}
+public static SelfBoolean getInstance(int length){return new SelfBoolean(null,length);}
+public int toInt(){return v?1:0;}
+public String getOutStr(){return Boolean.toString(v);}
+public String formatStr(String f,String sepa){return f.replaceAll("%[xX]","%v").replaceAll("%[hH]","%v").replaceAll("%[tT]",getTypeName()).replaceAll("%[vV]",getOutStr()).replaceAll("%[nN]",name).replaceAll("%%","%");}
+public void read()throws IOException{offset+=length;v=readBoolean(length);}
+public void write()throws IOException{outputWrapper.write(getPrintStr());}
+public String getTypeName(){return typeName;}
+}
+class SelfLong extends RootClass
+{
+private static String typeName="long";
+private long v;
+public SelfLong(String name,int length){super(name,length);}
+public static SelfLong getInstance(int length){return new SelfLong(null,length);}
+public int toInt(){return (int)v;}
+public String getOutStr(){return Long.toString(v);}
+public String formatStr(String f,String sepa){return f.replaceAll("%X","0X%H").replaceAll("%x","0x%h").replaceAll("%h",toHexStr(v,length,false)).replaceAll("%H",toHexStr(v,length,true)).replaceAll("%[tT]",getTypeName()).replaceAll("%[vV]",getOutStr()).replaceAll("%[nN]",name).replaceAll("%%","%");}
+public void read()throws IOException{offset+=length;v=readLong(length);}
+public void write()throws IOException{outputWrapper.write(getPrintStr());}
+public String getTypeName(){return typeName;}
+}
+class SelfDouble extends RootClass
+{
+private static String typeName="double";
+private double v;
+public SelfDouble(String name, int length){super(name,length);}
+public static SelfDouble getInstance(int length){return new SelfDouble(null,length);}
+public int toInt(){return (int)v;}
+public String getOutStr(){return Double.toString(v);}
+public String formatStr(String f,String sepa){return f.replaceAll("%[xX]","%v").replaceAll("%[hH]","%v").replaceAll("%[tT]",getTypeName()).replaceAll("%[vV]",getOutStr()).replaceAll("%[nN]",name).replaceAll("%%","%");}
+public void read()throws IOException{offset+=length;v=readDouble(length);}
+public void write()throws IOException{outputWrapper.write(getPrintStr());}
+public String getTypeName(){return typeName;}
+}
+class SelfString extends RootClass
+{
+private static String typeName="String";
+private String v;
+public SelfString(String name, int length){super(name, length);}
+public static SelfString getInstance(int length){return new SelfString(null,length);}
+public int toInt(){return 0;}
+public String getOutStr(){return v;}
+public String formatStr(String f,String sepa){return f.replaceAll("%[xX]","%v").replaceAll("%[hH]","%v").replaceAll("%[tT]",getTypeName()).replaceAll("%[vV]",getOutStr()).replaceAll("%[nN]",name).replaceAll("%%","%");}
+public void read()throws IOException{v=readString(length);offset+=v.length();}
+public void write()throws IOException{outputWrapper.write(getPrintStr());}
+public String getTypeName(){return typeName;}
+}
+class A extends RootClass
+{
+private static String typeName="A";
+SelfInteger a=new SelfInteger("a", 4);
+SelfInteger b=new SelfInteger("b", 1);
+public A(String name, int length){super(name, length);}
+public static A getInstance(int length){return new A(null,length);}
+public String getTypeName(){return typeName;}
+public String formatStr (String f,String sepa) {return a.formatStr(f,sepa)+sepa+b.formatStr(f,sepa)+sepa;}
+public int toInt () {return a.toInt()+b.toInt();}
+public void read ()throws IOException {a.read();b.read();}
+public void write ()throws IOException {a.write();outputWrapper.write(_insepa_);b.write();}
+public String getOutStr () {return a.getOutStr()+b.getOutStr();}
+public String getPrintStr () {return _printway_.replaceAll("%[vV]",getOutStr()).replaceAll("%[nN]",getName()).replaceAll("%[tT]",getTypeName());}
+}//struct end
+public class MainClass
+{
+public static InputWrapper inputWrapper;
+public static OutputWrapper outputWrapper;
+public static int read()throws IOException{return inputWrapper.read();}
+public static void write(String data)throws IOException{outputWrapper.write(data);}
+public static void skip(int count)throws IOException{for(int i=0;i<count;i++)inputWrapper.read();}
+public static void read(RootClass obj)throws IOException{obj.preFunction();obj.read();}
+public static void write(RootClass obj)throws IOException{obj.innerFunction();if(obj.isValid())obj.write();else obj.invalidFunction();}
+public static void main(String[]argv)
+{
+try
+{
+inputWrapper=new InputWrapper(RootClass._input_);
+outputWrapper = new OutputWrapper(RootClass._output_);
+RootClass.setInputWrapper(inputWrapper);
+RootClass.setOutputWrapper(outputWrapper);
+SelfInteger c=new SelfInteger("c", 4);
+A d=new A("d", 0);
+MutableType<SelfInteger> e= new MutableType<>("e",1,"fuck");
+read(c);
+read(d);
+e.config("SelfInteger",d.b.toInt(),SelfInteger::getInstance);
+read(e);
+write(c);
+write(RootClass._outsepa_);
+write(d);
+write(RootClass._outsepa_);
+write(e);
+write(RootClass._nextsepa_);
+}catch(Exception e){e.printStackTrace();}
+}//main-function
+}//main-class

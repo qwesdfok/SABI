@@ -1,0 +1,5 @@
+struct Test
+{
+  int ta
+  int tb
+}

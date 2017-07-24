@@ -1,0 +1,9 @@
+_input_="D:\lab\JavaPro\SABI\src\com\qwesdfok\Debug\data"
+_output_="C:\Users\qwesd\Desktop\out.txt"
+_nextsepa_="\r\n"
+struct A
+{
+  int a
+  int(1) b
+}
+int c,A d,mutable int(1) e(d.b)["fuck"]
